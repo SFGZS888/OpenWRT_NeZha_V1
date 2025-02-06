@@ -60,6 +60,7 @@ jobs:
         ARCH_CONFIG="configs/${{ matrix.arch }}.config"
         if [ -e "$ARCH_CONFIG" ]; then
           mv "$ARCH_CONFIG" openwrt/.config
+          cat openwrt/.config
         fi
 
     - name: Modify configuration
