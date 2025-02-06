@@ -9,7 +9,7 @@
 # Description: Build Nezha using GitHub Actions
 #
 
-name: Build NeZha
+name: Build NeZha Ipk
 
 on:
   repository_dispatch:
@@ -22,44 +22,32 @@ on:
 
 env:
   REPO_URL: https://git.openwrt.org/openwrt/openwrt.git
-  REPO_CHECKOUT: v17.01.6
+  REPO_CHECKOUT: v24.10.0
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: ./.github/.config_x64
+  EXTERNAL_FILE: configs/luci/nezha.config
   UPLOAD_BIN_DIR: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
-
+    runs-on: ovh
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
     steps:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Initialization environment
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
-        sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
-
     - name: Clone source code
-      working-directory: /workdir
       run: |
         df -hT $PWD
         git clone $REPO_URL openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        ln -sf ./openwrt $GITHUB_WORKSPACE/openwrt
         cd openwrt
         git checkout $REPO_CHECKOUT
         make distclean
-        echo 'src-git nezha https://github.com/Erope/openwrt_nezha' >> feeds.conf.default
+        echo 'src-git nezha https://github.com/dysf888/OpenWRT_NeZha_V1' >> feeds.conf.default
 
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
@@ -69,11 +57,21 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-    
+        ARCH_CONFIG="configs/${{ matrix.arch }}.config"
+        if [ -e "$ARCH_CONFIG" ]; then
+          mv "$ARCH_CONFIG" openwrt/.config
+        fi
+
+    - name: Modify configuration
+      run: |
+        cat $EXTERNAL_FILE >> openwrt/.config
+        export FORCE_UNSAFE_CONFIGURE=1
+        cd openwrt && make defconfig
+        cat .config
+
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
       env:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -81,29 +79,23 @@ jobs:
     - name: Download
       run: |
         cd openwrt
-        make -j16 download V=s
+        make download -j$(nproc) V=s
 
     - name: Compile the BIN
       id: compile
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j2 toolchain/install
-        make -j2 package/luci-app-nezha/compile V=99
-        make -j2 package/openwrt-nezha/compile V=99
-        mv -f $GITHUB_WORKSPACE/.github/.config_x86 .config
-        make -j2 toolchain/install
-        make -j2 package/openwrt-nezha/compile V=99
-        mv -f $GITHUB_WORKSPACE/.github/.config_arm64 .config
-        make -j2 toolchain/install
-        make -j2 package/openwrt-nezha/compile V=99
+        make -j$(nproc) toolchain/install
+        make -j$(nproc) package/feeds/nezha/openwrt-nezha/compile V=s
+        make -j$(nproc) package/feeds/nezha/luci-app-nezha-agent-v1/compile V=s
         echo "::set-output name=status::success"
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_bin_${{ matrix.arch }}_${{ env.FILE_DATE }}
         path: openwrt/bin
 
     - name: Generate release tag
@@ -115,7 +107,7 @@ jobs:
         echo "::set-output name=status::success"
 
     - name: Upload BIN to release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -124,5 +116,6 @@ jobs:
         body_path: release.txt
         files: |
           openwrt/bin/packages/x86_64/nezha/*
+          openwrt/bin/packages/x86_64/packages/lyaml*
           openwrt/bin/packages/aarch64_armv8-a/nezha/*
-          openwrt/bin/packages/i386_pentium4/nezha/*
+          openwrt/bin/packages/aarch64_armv8-a/packages/lyaml*

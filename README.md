@@ -1,6 +1,4 @@
-# openwrt_nezha
-
-哪吒监控 For OpenWRT
+# 哪吒监控 For OpenWRT
 
 **暂时仅支持lua版本**
 
@@ -16,17 +14,17 @@
 
 ### 编译
 
-将 `src-git nezha https://github.com/Erope/openwrt_nezha` 添加至 `feeds.conf.default` 后执行
+将 `src-git nezha https://github.com/dysf888/OpenWRT_NeZha_V1` 添加至 `feeds.conf.default` 后执行
 
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
-找到luci-app-nezha 选中后编译即可
+找到luci-app-nezha-v1 选中后编译即可
 
 
 
 ## 安装IPK包
 
-从Release中下载适合的包后自行安装(仅支持X64 X86和ARM64)
+从Release中下载适合的包后自行安装(仅支持X86_64和ARM64)
 
 
 
@@ -34,7 +32,9 @@
 
 部分代码来自P3TERX <https://p3terx.com> 和 KFERMercer <KFER.Mercer@gmail.com>
 
-源项目为: <https://github.com/naiba/nezha>
+源项目为: 
+- <https://github.com/nezhahq/nezha>
+- <https://github.com/Erope/openwrt_nezha>
 
 非常感谢！
 
@@ -42,7 +42,7 @@
 
 ## Q/A
 
-1. Q: 我的架构并非X64 X86和ARM64 可以安装吗？
+1. Q: 我的架构并非X86_64和ARM64 可以安装吗？
 
    A: 可以，请自行编译，但需要注意如果性能较弱或者内存过少，启动Nezha可能会严重消耗性能。
 
