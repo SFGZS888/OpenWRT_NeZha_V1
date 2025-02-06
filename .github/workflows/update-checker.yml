@@ -44,8 +44,11 @@ jobs:
     
     - name: Trigger build
       if: steps.cacheVer.outputs.cache-hit != 'true'
-      uses: dysf888/ActionBot@main
-
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        event-type: Source Code Update
+        
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
