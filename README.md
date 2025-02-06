@@ -30,7 +30,10 @@
 
 ## 致谢
 
-部分代码来自P3TERX <https://p3terx.com> 和 KFERMercer <KFER.Mercer@gmail.com>
+部分代码来自
+- P3TERX <https://p3terx.com>
+- KFERMercer <KFER.Mercer@gmail.com>
+- Erope <https://www.shinenet.cn>
 
 源项目为: 
 - <https://github.com/nezhahq/nezha>
