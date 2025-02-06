@@ -76,6 +76,7 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) toolchain/install
         make -j$(nproc) package/feeds/nezha/openwrt-nezha/compile V=s
+        make -j$(nproc) package/feeds/packages/lyaml/compile V=s
         make -j$(nproc) package/feeds/nezha/luci-app-nezha-agent-v1/compile V=s
         mv -f $GITHUB_WORKSPACE/configs/arm64.config .config
         make -j$(nproc) toolchain/install
