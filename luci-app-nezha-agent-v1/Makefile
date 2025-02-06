@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-nezha-agent-v1
 LUCI_TITLE:=LuCI support for Nezha Agent
-LUCI_DEPENDS:=+nezha-agent
+LUCI_DEPENDS:=+nezha-agent +lyaml
 LUCI_PKGARCH:=all
 PKG_VERSION:=3.0
 PKG_RELEASE:=1
