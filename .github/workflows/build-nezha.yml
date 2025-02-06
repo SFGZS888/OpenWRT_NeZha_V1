@@ -24,7 +24,7 @@ env:
   REPO_URL: https://git.openwrt.org/openwrt/openwrt.git
   REPO_CHECKOUT: v24.10.0
   FEEDS_CONF: feeds.conf.default
-  EXTERNAL_FILE: configs/luci/nezha.config
+  CONFIG_FILE: configs/x86_64.config
   UPLOAD_BIN_DIR: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
@@ -32,9 +32,7 @@ env:
 jobs:
   build:
     runs-on: ovh
-    strategy:
-      matrix:
-        arch: [x86_64, arm64]
+
     steps:
     - name: Checkout
       uses: actions/checkout@main
@@ -57,18 +55,7 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        ARCH_CONFIG="configs/${{ matrix.arch }}.config"
-        if [ -e "$ARCH_CONFIG" ]; then
-          mv "$ARCH_CONFIG" openwrt/.config
-          cat openwrt/.config
-        fi
-
-    - name: Modify configuration
-      run: |
-        cat $EXTERNAL_FILE >> openwrt/.config
-        export FORCE_UNSAFE_CONFIGURE=1
-        cd openwrt && make defconfig
-        cat .config
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -90,6 +77,9 @@ jobs:
         make -j$(nproc) toolchain/install
         make -j$(nproc) package/feeds/nezha/openwrt-nezha/compile V=s
         make -j$(nproc) package/feeds/nezha/luci-app-nezha-agent-v1/compile V=s
+        mv -f $GITHUB_WORKSPACE/configs/arm64.config .config
+        make -j$(nproc) toolchain/install
+        make -j$(nproc) package/openwrt-nezha/compile V=99
         echo "::set-output name=status::success"
 
     - name: Upload bin directory
@@ -118,5 +108,5 @@ jobs:
         files: |
           openwrt/bin/packages/x86_64/nezha/*
           openwrt/bin/packages/x86_64/packages/lyaml*
-          openwrt/bin/packages/aarch64_armv8-a/nezha/*
-          openwrt/bin/packages/aarch64_armv8-a/packages/lyaml*
+          openwrt/bin/packages/aarch64_generic/nezha/*
+          openwrt/bin/packages/aarch64_generic/packages/lyaml*
