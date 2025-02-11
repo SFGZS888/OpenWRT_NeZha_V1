@@ -81,6 +81,7 @@ jobs:
         mv -f $GITHUB_WORKSPACE/configs/arm64.config .config
         make -j$(nproc) toolchain/install
         make -j$(nproc) package/openwrt-nezha/compile V=99
+        make -j$(nproc) package/feeds/packages/lyaml/compile V=s
         echo "::set-output name=status::success"
 
     - name: Upload bin directory
