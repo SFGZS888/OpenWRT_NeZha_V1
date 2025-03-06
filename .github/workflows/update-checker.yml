@@ -32,7 +32,7 @@ jobs:
     
     - name: Compare Version
       id: cacheVer
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: .savever
         key: HEAD-${{ steps.getVer.outputs.Version }}
